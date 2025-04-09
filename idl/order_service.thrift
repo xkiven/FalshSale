@@ -1,0 +1,2 @@
+namespace go
+FlashSale.order_service
