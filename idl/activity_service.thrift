@@ -2,6 +2,7 @@ namespace go
 FlashSale.activity_service
 
 //活动创建请求
+
 struct CreateActivityRequest{
     1: i32 activity_id,
     2: string start_time,
