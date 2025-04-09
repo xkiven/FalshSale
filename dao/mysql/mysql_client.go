@@ -21,6 +21,8 @@ func NewMySQLClient(dataSource string) (*MySQLClient, error) {
 		DB: db,
 	}, nil
 }
+
+// CreateActivity 创建活动
 func CreateActivity(db *gorm.DB, activity *models.Activity) error {
 	err := db.Create(activity).Error
 	if err != nil {
