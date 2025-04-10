@@ -9,7 +9,7 @@ import (
 type Config struct {
 	MySQL struct {
 		DataSource string `yaml:"DataSource"`
-	} `yaml:"MySQL"`
+	} `yaml:"Mysql"`
 	Redis struct {
 		Host string `yaml:"Host"`
 		Pass string `yaml:"Pass"`

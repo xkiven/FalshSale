@@ -1,10 +1,9 @@
-mysql:
-  MySQL:
-    DataSource: root:xkw510724@tcp(127.0.0.1:3306)/flash_sale?charset=utf8mb4&parseTime=True&loc=Local
+Mysql:
+  DataSource: root:xkw510724@tcp(127.0.0.1:3306)/flash_sale?charset=utf8mb4&parseTime=True
 Redis:
   Host: 127.0.0.1:6379
   Pass: ""
-kafka:
+Kafka:
   Brokers:
     - "localhost:9092"
-  topic: "flash_sale"
+  Topic: "flash_sale"
