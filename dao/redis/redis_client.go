@@ -10,13 +10,11 @@ type RedisClient struct {
 }
 
 // NewRedisClient 创建 Redis 客户端实例
-func NewRedisClient(host, pass string) *RedisClient {
+func NewRedisClient(host, pass string) *redis.Client {
 	client := redis.NewClient(&redis.Options{
 		Addr:     host,
 		Password: pass,
 		DB:       0,
 	})
-	return &RedisClient{
-		Client: client,
-	}
+	return client
 }

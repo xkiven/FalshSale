@@ -8,13 +8,11 @@ type KafkaConsumer struct {
 }
 
 // NewKafkaConsumer 创建 Kafka 消费者实例
-func NewKafkaConsumer(brokers []string, topic string) *KafkaConsumer {
+func NewKafkaConsumer(brokers []string, topic string) *kafka.Reader {
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: brokers,
 		Topic:   topic,
 		GroupID: "message-group",
 	})
-	return &KafkaConsumer{
-		reader: reader,
-	}
+	return reader
 }

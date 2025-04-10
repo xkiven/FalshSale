@@ -3,11 +3,10 @@ package main
 import (
 	"FlashSale/config"
 	"FlashSale/dao/kafka"
+	"FlashSale/dao/mysql"
 	"FlashSale/dao/redis"
 	activity_service "FlashSale/kitex_gen/FlashSale/activity_service/activityservice"
 	"FlashSale/svc"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"log"
 )
 
@@ -18,11 +17,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("加载配置文件失败: %v", err)
 	}
-	log.Println(cfg)
 	// 初始化数据库和消息队列客户端
-	url := cfg.MySQL.DataSource
-	log.Println(url)
-	mysqlClient, err := gorm.Open(mysql.Open(cfg.MySQL.DataSource), &gorm.Config{})
+	mysqlClient, err := mysql.NewMySQLClient(cfg.MySQL.DataSource)
 	if err != nil {
 		log.Fatalf("初始化 MySQL 失败: %v", err)
 	}

@@ -12,14 +12,12 @@ type MySQLClient struct {
 }
 
 // NewMySQLClient 创建 MySQL 实例
-func NewMySQLClient(dataSource string) (*MySQLClient, error) {
+func NewMySQLClient(dataSource string) (*gorm.DB, error) {
 	db, err := gorm.Open(mysql.Open(dataSource), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
-	return &MySQLClient{
-		DB: db,
-	}, nil
+	return db, nil
 }
 
 // CreateActivity 创建活动

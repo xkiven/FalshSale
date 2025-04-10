@@ -8,13 +8,11 @@ type KafkaProducer struct {
 }
 
 // NewKafkaProducer 创建 Kafka 生产者实例
-func NewKafkaProducer(brokers []string, topic string) *KafkaProducer {
+func NewKafkaProducer(brokers []string, topic string) *kafka.Writer {
 	writer := &kafka.Writer{
 		Addr:     kafka.TCP(brokers...),
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	}
-	return &KafkaProducer{
-		writer: writer,
-	}
+	return writer
 }
