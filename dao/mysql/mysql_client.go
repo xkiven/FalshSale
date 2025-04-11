@@ -28,3 +28,12 @@ func CreateActivity(db *gorm.DB, activity *models.Activity) error {
 	}
 	return nil
 }
+
+// CreateOrder 创建订单
+func CreateOrder(db *gorm.DB, order *models.Order) error {
+	err := db.Create(order).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
