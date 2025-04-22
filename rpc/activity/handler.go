@@ -22,6 +22,6 @@ func NewActivityServiceImpl(sc *svc.ServiceContext) *ActivityServiceImpl {
 // CreateActivity implements the ActivityServiceImpl interface.
 func (s *ActivityServiceImpl) CreateActivity(ctx context.Context, req *activity_service.CreateActivityRequest) (resp *activity_service.CreateActivityResponse, err error) {
 	// TODO: Your code here...
-	resp, err = logic.CreateActivity(ctx, s.sc.MySQLClient, req)
+	resp, err = logic.CreateActivity(ctx, s.sc.MySQLClient, s.sc.RedisClient, req)
 	return resp, err
 }

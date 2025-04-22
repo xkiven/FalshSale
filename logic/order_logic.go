@@ -2,6 +2,7 @@ package logic
 
 import (
 	"FlashSale/dao/mysql"
+	redis2 "FlashSale/dao/redis"
 	"FlashSale/kitex_gen/FlashSale/order_service"
 	"FlashSale/models"
 	"context"
@@ -16,7 +17,23 @@ func CreateOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, req *order
 		ProductID:  int(req.ProductId),
 	}
 
-	err := mysql.CreateOrder(db, &order)
+	success, err := redis2.CheckAndDeductStock(rdb)
+	{
+		if err != nil {
+			return &order_service.CreateOrderResponse{
+				Code:    1,
+				Message: err.Error(),
+			}, err
+		}
+	}
+	if !success {
+		return &order_service.CreateOrderResponse{
+			Code:    1,
+			Message: "商品已售空",
+		}, err
+	}
+
+	err = mysql.CreateOrder(db, &order)
 	if err != nil {
 		return &order_service.CreateOrderResponse{
 			Code:    1,
