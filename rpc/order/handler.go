@@ -22,6 +22,6 @@ func NewOrderServiceImpl(sc *svc.ServiceContext) *OrderServiceImpl {
 // CreateOrder implements the OrderServiceImpl interface.
 func (s *OrderServiceImpl) CreateOrder(ctx context.Context, req *order_service.CreateOrderRequest) (resp *order_service.CreateOrderResponse, err error) {
 	// TODO: Your code here...
-	resp, err = logic.CreateOrder(ctx, s.sc.MySQLClient, s.sc.RedisClient, req)
+	resp, err = logic.CreateOrder(ctx, s.sc.MySQLClient, s.sc.RedisClient, s.sc.KafkaProducer, s.sc.KafkaConsumer, req)
 	return
 }

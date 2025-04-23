@@ -1,6 +1,13 @@
 package kafka
 
-import "github.com/segmentio/kafka-go"
+import (
+	"FlashSale/models"
+	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/segmentio/kafka-go"
+	"strconv"
+)
 
 // KafkaProducer 定义 Kafka 生产者结构体
 type KafkaProducer struct {
@@ -15,4 +22,48 @@ func NewKafkaProducer(brokers []string, topic string) *kafka.Writer {
 		Balancer: &kafka.LeastBytes{},
 	}
 	return writer
+}
+
+// SendOrderMessage 发送消息到生产者
+func SendOrderMessage(producer *kafka.Writer, order models.Order, topic string) error {
+	// 将订单结构体序列化为JSON数据
+	orderData, err := json.Marshal(order)
+	if err != nil {
+		return err
+	}
+
+	keyStr := strconv.Itoa(order.ID)
+	key := []byte(keyStr)
+	// 创建Kafka消息
+	msg := kafka.Message{
+		Key:   key, // 使用订单ID作为消息键
+		Value: orderData,
+	}
+
+	// 发送消息到Kafka
+	err = producer.WriteMessages(context.Background(), msg)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("订单 %s 已成功发送到 Kafka 主题 %s\n", order.ID, topic)
+	return nil
+}
+
+// ConsumeMessage 消费者读取消息的函数
+func ConsumeMessage(consumer *kafka.Reader) (*models.Order, error) {
+	// 从Kafka中读取消息
+	msg, err := consumer.ReadMessage(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("从Kafka读取消息失败: %v", err)
+	}
+
+	// 反序列化消息数据为Order结构体
+	var order models.Order
+	err = json.Unmarshal(msg.Value, &order)
+	if err != nil {
+		return nil, fmt.Errorf("反序列化消息失败: %v", err)
+	}
+
+	return &order, nil
 }
