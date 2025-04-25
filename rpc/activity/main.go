@@ -2,12 +2,16 @@ package main
 
 import (
 	"FlashSale/config"
+	"FlashSale/consul"
 	"FlashSale/dao/kafka"
 	"FlashSale/dao/mysql"
 	"FlashSale/dao/redis"
 	activity_service "FlashSale/kitex_gen/FlashSale/activity_service/activityservice"
 	"FlashSale/svc"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
+	"github.com/cloudwego/kitex/server"
 	"log"
+	"net"
 )
 
 func main() {
@@ -30,7 +34,25 @@ func main() {
 
 	// 初始化 ActivityService
 	activityHandler := NewActivityServiceImpl(sc)
-	svr := activity_service.NewServer(activityHandler)
+	// 创建 Consul 注册中心
+	consulRegistry, err := consul.NewConsulRegistry("127.0.0.1:8500")
+	if err != nil {
+		panic(err)
+	}
+
+	// 创建服务实例
+	svr := activity_service.NewServer(
+		activityHandler,
+		server.WithRegistry(consulRegistry),
+		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
+			ServiceName: "ActivityServer",
+			Tags:        map[string]string{"env": "dev"},
+		}),
+		server.WithServiceAddr(&net.TCPAddr{ // 设置服务地址和端口
+			IP:   net.IPv4(127, 0, 0, 1),
+			Port: 8888, // 你的服务端口号
+		}),
+	)
 
 	err = svr.Run()
 	if err != nil {

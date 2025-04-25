@@ -2,12 +2,16 @@ package main
 
 import (
 	"FlashSale/config"
+	"FlashSale/consul"
 	"FlashSale/dao/kafka"
 	"FlashSale/dao/mysql"
 	"FlashSale/dao/redis"
 	order_service "FlashSale/kitex_gen/FlashSale/order_service/orderservice"
 	"FlashSale/svc"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
+	"github.com/cloudwego/kitex/server"
 	"log"
+	"net"
 )
 
 func main() {
@@ -30,7 +34,25 @@ func main() {
 
 	// 初始化 OrderService
 	orderHandler := NewOrderServiceImpl(sc)
-	svr := order_service.NewServer(orderHandler)
+
+	// 创建 Consul 注册中心
+	consulRegistry, err := consul.NewConsulRegistry("127.0.0.1:8500")
+	if err != nil {
+		panic(err)
+	}
+
+	svr := order_service.NewServer(
+		orderHandler,
+		server.WithRegistry(consulRegistry),
+		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
+			ServiceName: "OrderUrlServer",
+			Tags:        map[string]string{"env": "dev"},
+		}),
+		server.WithServiceAddr(&net.TCPAddr{ // 设置服务地址和端口
+			IP:   net.IPv4(127, 0, 0, 1),
+			Port: 8889, // 你的服务端口号
+		}),
+	)
 
 	err = svr.Run()
 

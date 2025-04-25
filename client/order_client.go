@@ -15,7 +15,7 @@ func GenerateOrderClient(req *order_service.CreateOrderRequest) (*order_service.
 	fmt.Println("创建客户端")
 	cli, err := orderservice.NewClient(
 		"GenerateOrderService",
-		client.WithHostPorts("127.0.0.1:8888"),
+		client.WithHostPorts("127.0.0.1:8889"),
 		client.WithMiddleware(middleware.GatewayMiddleware(bucket)),
 	)
 	if err != nil {
