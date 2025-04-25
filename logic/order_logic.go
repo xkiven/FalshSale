@@ -11,9 +11,10 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
+	"log"
 )
 
-// 定义一个订单处理任务的结构体
+// OrderTask 定义一个订单处理任务的结构体
 type OrderTask struct {
 	Ctx      context.Context
 	DB       *gorm.DB
@@ -29,7 +30,7 @@ func worker(tasks <-chan OrderTask) {
 	for task := range tasks {
 		resp, err := createSingleOrder(task.Ctx, task.DB, task.RDB, task.Producer, task.Consumer, task.Req)
 		if err != nil {
-			// 这里可以添加更详细的错误处理逻辑
+			log.Printf("创建订单失败:%v\n", err)
 		}
 		task.Result <- resp
 	}
