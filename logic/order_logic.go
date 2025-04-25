@@ -13,7 +13,30 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, producer *kafka.Writer, consumer *kafka.Reader, req *order_service.CreateOrderRequest) (*order_service.CreateOrderResponse, error) {
+// 定义一个订单处理任务的结构体
+type OrderTask struct {
+	Ctx      context.Context
+	DB       *gorm.DB
+	RDB      *redis.Client
+	Producer *kafka.Writer
+	Consumer *kafka.Reader
+	Req      *order_service.CreateOrderRequest
+	Result   chan *order_service.CreateOrderResponse
+}
+
+// 工作协程函数，处理单个订单任务
+func worker(tasks <-chan OrderTask) {
+	for task := range tasks {
+		resp, err := createSingleOrder(task.Ctx, task.DB, task.RDB, task.Producer, task.Consumer, task.Req)
+		if err != nil {
+			// 这里可以添加更详细的错误处理逻辑
+		}
+		task.Result <- resp
+	}
+}
+
+// 封装原有的 CreateOrder 逻辑到一个新的函数中
+func createSingleOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, producer *kafka.Writer, consumer *kafka.Reader, req *order_service.CreateOrderRequest) (*order_service.CreateOrderResponse, error) {
 	var resp *order_service.CreateOrderResponse
 	err := hystrix.Do("create_order", func() error {
 		order := models.Order{
@@ -22,7 +45,7 @@ func CreateOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, producer *
 			ProductID:  int(req.ProductId),
 		}
 
-		success, err := redis2.CheckAndDeductStock(rdb)
+		success, err := redis2.CheckAndDeductStock(rdb, order.ProductID)
 		if err != nil {
 			resp = &order_service.CreateOrderResponse{
 				Code:    1,
@@ -81,4 +104,42 @@ func CreateOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, producer *
 	})
 
 	return resp, err
+}
+
+// CreateOrder 并发处理多个订单的函数
+func CreateOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, producer *kafka.Writer, consumer *kafka.Reader, reqs []*order_service.CreateOrderRequest) []*order_service.CreateOrderResponse {
+	// 定义工作协程的数量
+	numWorkers := 5
+	// 创建任务通道
+	tasks := make(chan OrderTask, len(reqs))
+	// 创建结果通道
+	results := make(chan *order_service.CreateOrderResponse, len(reqs))
+
+	// 启动工作协程
+	for i := 0; i < numWorkers; i++ {
+		go worker(tasks)
+	}
+
+	// 分发任务到任务通道
+	for _, req := range reqs {
+		tasks <- OrderTask{
+			Ctx:      ctx,
+			DB:       db,
+			RDB:      rdb,
+			Producer: producer,
+			Consumer: consumer,
+			Req:      req,
+			Result:   results,
+		}
+	}
+	close(tasks)
+
+	// 收集结果
+	var responses []*order_service.CreateOrderResponse
+	for i := 0; i < len(reqs); i++ {
+		responses = append(responses, <-results)
+	}
+	close(results)
+
+	return responses
 }

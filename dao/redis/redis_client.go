@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
+	"log"
 	"sync"
 )
 
@@ -37,20 +38,29 @@ func InitializeStock(client *redis.Client, initialStock int64) error {
 }
 
 // CheckAndDeductStock 函数用于检查和扣减库存
-func CheckAndDeductStock(client *redis.Client) (bool, error) {
-	mu.Lock()         //加锁
-	defer mu.Unlock() //函数结束时解锁
+func CheckAndDeductStock(client *redis.Client, productID int) (bool, error) {
+	// 动态生成库存键
+	productStockKey := fmt.Sprintf("product:stock:%d", productID)
+
 	// 从 Redis 中获取当前库存数量并原子性扣减
 	decrementResult := client.Decr(ctx, productStockKey)
 	if decrementResult.Err() != nil {
+		log.Printf("Redis 扣减库存失败，商品 ID: %d，错误信息: %v", productID, decrementResult.Err())
 		return false, decrementResult.Err()
 	}
+
 	// 获取扣减后的库存数量
 	stock := decrementResult.Val()
 	if stock >= 0 {
-		fmt.Println("秒杀成功，继续后续订单创建流程")
+		log.Printf("秒杀成功，商品 ID: %d，继续后续订单创建流程", productID)
 		return true, nil
 	}
-	fmt.Println("秒杀失败，商品已售罄")
+
+	log.Printf("秒杀失败，商品 ID: %d，商品已售罄", productID)
+	// 库存不足，将库存加回去
+	_, err := client.Incr(ctx, productStockKey).Result()
+	if err != nil {
+		log.Printf("Redis 恢复库存失败，商品 ID: %d，错误信息: %v", productID, err)
+	}
 	return false, nil
 }
