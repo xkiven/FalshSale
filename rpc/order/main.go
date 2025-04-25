@@ -8,6 +8,7 @@ import (
 	"FlashSale/dao/redis"
 	order_service "FlashSale/kitex_gen/FlashSale/order_service/orderservice"
 	"FlashSale/svc"
+	"github.com/afex/hystrix-go/hystrix"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
 	"log"
@@ -21,6 +22,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("加载配置文件失败: %v", err)
 	}
+
+	// 配置熔断器
+	hystrix.ConfigureCommand("create_order", hystrix.CommandConfig{
+		Timeout:               5000, // 超时时间（毫秒）
+		MaxConcurrentRequests: 100,  // 最大并发请求数
+		ErrorPercentThreshold: 25,   // 错误率阈值
+		SleepWindow:           5000, // 熔断后休眠时间（毫秒）
+	})
+
 	// 初始化数据库和消息队列客户端
 	mysqlClient, err := mysql.NewMySQLClient(cfg.MySQL.DataSource)
 	if err != nil {
