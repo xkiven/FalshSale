@@ -10,7 +10,7 @@ import (
 )
 
 func GenerateOrderClient(req *order_service.CreateOrderRequest) (*order_service.CreateOrderResponse, error) {
-	bucket := middleware.NewBucket(100, 10)
+	bucket := middleware.NewBucket(200, 20)
 	// 创建 Kitex 客户端
 	fmt.Println("创建客户端")
 	cli, err := orderservice.NewClient(

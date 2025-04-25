@@ -5,8 +5,10 @@ import (
 	"FlashSale/dao/mysql"
 	redis2 "FlashSale/dao/redis"
 	"FlashSale/kitex_gen/FlashSale/order_service"
+	"FlashSale/middleware"
 	"FlashSale/models"
 	"context"
+	"fmt"
 	"github.com/afex/hystrix-go/hystrix"
 	"github.com/go-redis/redis/v8"
 	"github.com/segmentio/kafka-go"
@@ -38,8 +40,25 @@ func worker(tasks <-chan OrderTask) {
 
 // 封装原有的 CreateOrder 逻辑到一个新的函数中
 func createSingleOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, producer *kafka.Writer, consumer *kafka.Reader, req *order_service.CreateOrderRequest) (*order_service.CreateOrderResponse, error) {
+
+	// 检查当前时间是否在活动时间区间内
+	right, err := middleware.IsInActivityTime(ctx, db, rdb, req.ActivityId)
+	if err != nil {
+		return &order_service.CreateOrderResponse{
+			Code:    3,
+			Message: "判断时间出错",
+		}, err
+	}
+	fmt.Println(right)
+	if !right {
+		return &order_service.CreateOrderResponse{
+			Code:    6,
+			Message: "当前不在活动时间内，无法创建订单",
+		}, err
+	}
+
 	var resp *order_service.CreateOrderResponse
-	err := hystrix.Do("create_order", func() error {
+	err = hystrix.Do("create_order", func() error {
 		order := models.Order{
 			UserID:     int(req.UserId),
 			ActivityID: int(req.ActivityId),

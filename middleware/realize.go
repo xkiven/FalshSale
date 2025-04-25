@@ -8,10 +8,6 @@ import (
 func GatewayMiddleware(bucket *Bucket) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
 		return func(ctx context.Context, req, resp interface{}) (err error) {
-			// 检查请求是否在活动时间内
-			if !isInActivityTime() {
-				return &MyError{Code: 400, Message: "请求不在活动时间内"}
-			}
 			// 进行限流检查
 			if !bucket.Allow() {
 				return &MyError{Code: 429, Message: "请求过于频繁，请稍后再试"}

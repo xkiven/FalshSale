@@ -6,11 +6,28 @@ import (
 	"FlashSale/kitex_gen/FlashSale/activity_service"
 	"FlashSale/models"
 	"context"
+	"errors"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
 func CreateActivity(ctx context.Context, db *gorm.DB, rdb *redis.Client, req *activity_service.CreateActivityRequest) (*activity_service.CreateActivityResponse, error) {
+	// 检查产品是否存在
+	var product models.Product
+	result := db.First(&product, req.ProductId)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return &activity_service.CreateActivityResponse{
+				Code:    3,
+				Message: "产品不存在",
+			}, result.Error
+		}
+		return &activity_service.CreateActivityResponse{
+			Code:    1,
+			Message: result.Error.Error(),
+		}, result.Error
+	}
+
 	activity := models.Activity{
 		ID:            int(req.ActivityId),
 		StartTime:     req.StartTime,

@@ -17,6 +17,13 @@ func NewMySQLClient(dataSource string) (*gorm.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// 自动迁移模型
+	err = db.AutoMigrate(&models.Activity{}, &models.Order{}, &models.Product{})
+	if err != nil {
+		return nil, err
+	}
+
 	return db, nil
 }
 
