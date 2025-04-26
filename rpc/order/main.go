@@ -25,10 +25,10 @@ func main() {
 
 	// 配置熔断器
 	hystrix.ConfigureCommand("create_order", hystrix.CommandConfig{
-		Timeout:               5000, // 超时时间（毫秒）
-		MaxConcurrentRequests: 100,  // 最大并发请求数
-		ErrorPercentThreshold: 25,   // 错误率阈值
-		SleepWindow:           5000, // 熔断后休眠时间（毫秒）
+		Timeout:               10000, // 超时时间（毫秒）
+		MaxConcurrentRequests: 100,   // 最大并发请求数
+		ErrorPercentThreshold: 25,    // 错误率阈值
+		SleepWindow:           5000,  // 熔断后休眠时间（毫秒）
 	})
 
 	// 初始化数据库和消息队列客户端

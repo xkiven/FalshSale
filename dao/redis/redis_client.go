@@ -26,13 +26,11 @@ func NewRedisClient(host, pass string) *redis.Client {
 var ctx = context.Background()
 var mu sync.Mutex
 
-// 假设商品在 Redis 中的 key 为 "product:stock:{productID}"，这里以 productID 为 1 举例
-const productStockKey = "product:stock:1"
-
 // InitializeStock 函数用于初始化商品库存
-func InitializeStock(client *redis.Client, initialStock int64) error {
-	mu.Lock()         //加锁
-	defer mu.Unlock() //函数结束时解锁
+func InitializeStock(client *redis.Client, productID int, initialStock int64) error {
+	mu.Lock()         // 加锁
+	defer mu.Unlock() // 函数结束时解锁
+	productStockKey := fmt.Sprintf("product:stock:%d", productID)
 	setResult := client.Set(ctx, productStockKey, initialStock, 0)
 	return setResult.Err()
 }
@@ -51,6 +49,7 @@ func CheckAndDeductStock(client *redis.Client, productID int) (bool, error) {
 
 	// 获取扣减后的库存数量
 	stock := decrementResult.Val()
+	log.Println(stock)
 	if stock >= 0 {
 		log.Printf("秒杀成功，商品 ID: %d，继续后续订单创建流程", productID)
 		return true, nil

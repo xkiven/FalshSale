@@ -80,7 +80,7 @@ func createSingleOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, prod
 			}
 			return nil
 		}
-
+		log.Println("传入kafka")
 		topic := "flash_sale"
 		err = kafka2.SendOrderMessage(producer, order, topic)
 		if err != nil {
@@ -90,7 +90,7 @@ func createSingleOrder(ctx context.Context, db *gorm.DB, rdb *redis.Client, prod
 			}
 			return err
 		}
-
+		log.Println("从kafka传出")
 		NewOrder, err := kafka2.ConsumeMessage(consumer)
 		if err != nil {
 			resp = &order_service.CreateOrderResponse{

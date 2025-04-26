@@ -9,6 +9,7 @@ import (
 	"errors"
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
+	"log"
 )
 
 func CreateActivity(ctx context.Context, db *gorm.DB, rdb *redis.Client, req *activity_service.CreateActivityRequest) (*activity_service.CreateActivityResponse, error) {
@@ -34,7 +35,7 @@ func CreateActivity(ctx context.Context, db *gorm.DB, rdb *redis.Client, req *ac
 		EndTime:       req.EndTime,
 		ProductID:     int(req.ProductId),
 		DiscountPrice: req.DiscountPrice,
-		Product:       models.Product{},
+		Product:       product,
 	}
 	err := mysql.CreateActivity(db, &activity)
 	if err != nil {
@@ -45,13 +46,15 @@ func CreateActivity(ctx context.Context, db *gorm.DB, rdb *redis.Client, req *ac
 	}
 	//初始化库存
 	initialStock := int64(activity.Product.Stock)
-	err = redis2.InitializeStock(rdb, initialStock)
+	log.Println(initialStock)
+	err = redis2.InitializeStock(rdb, activity.ProductID, initialStock)
 	if err != nil {
 		return &activity_service.CreateActivityResponse{
 			Code:    2,
 			Message: err.Error(),
 		}, err
 	}
+
 	return &activity_service.CreateActivityResponse{
 		Code:    0,
 		Message: "创建活动成功",
