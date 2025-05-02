@@ -56,24 +56,3 @@ func SendOrderMessage(producer *kafka.Writer, order models.Order, topic string) 
 	fmt.Printf("订单 %s 已成功发送到 Kafka 主题 %s\n", order.ID, topic)
 	return nil
 }
-
-// ConsumeMessage 消费者读取消息的函数
-func ConsumeMessage(consumer *kafka.Reader) (*models.Order, error) {
-	// 从Kafka中读取消息
-	log.Println("从Kafka中读取消息")
-	msg, err := consumer.ReadMessage(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("从Kafka读取消息失败: %v", err)
-	}
-
-	// 反序列化消息数据为Order结构体
-	log.Println("反序列化消息数据为Order结构体")
-	var order models.Order
-	err = json.Unmarshal(msg.Value, &order)
-	if err != nil {
-		return nil, fmt.Errorf("反序列化消息失败: %v", err)
-	}
-	fmt.Println("读取Kafka消息成功")
-
-	return &order, nil
-}
